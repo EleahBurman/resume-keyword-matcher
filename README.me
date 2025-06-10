@@ -1,0 +1,131 @@
+# Resume Keyword Matcher
+
+A web application that analyzes how well a resume matches a job description by identifying overlapping keywords and providing a compatibility score.
+
+## Features
+
+- Upload resume (PDF, DOCX, or plain text)
+- Paste or upload job description
+- Intelligent keyword extraction and matching
+- Visual highlighting of matched phrases
+- Compatibility score with detailed breakdown
+- Clean, responsive web interface
+
+## Tech Stack
+
+- **Backend**: Python with Flask
+- **NLP**: spaCy and NLTK for text processing
+- **Frontend**: HTML, CSS, JavaScript (with potential React upgrade)
+- **File Processing**: PyPDF2 for PDFs, python-docx for Word documents
+
+## Installation
+
+### Prerequisites
+- Python 3.8 or higher
+- pip (Python package installer)
+
+### Setup
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/resume-keyword-matcher.git
+cd resume-keyword-matcher
+```
+
+2. Create a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On macOS/Linux
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Download spaCy language model:
+```bash
+python -m spacy download en_core_web_sm
+```
+
+5. Run the application:
+```bash
+python app.py
+```
+
+6. Open your browser and go to `http://localhost:5000`
+
+## Project Structure
+
+```
+resume-keyword-matcher/
+├── app.py                 # Main Flask application
+├── requirements.txt       # Python dependencies
+├── README.md             # This file
+├── .gitignore           # Git ignore file
+├── static/              # CSS, JS, images
+│   ├── css/
+│   ├── js/
+│   └── uploads/         # Temporary file storage
+├── templates/           # HTML templates
+│   ├── base.html
+│   ├── index.html
+│   └── results.html
+├── utils/               # Utility modules
+│   ├── __init__.py
+│   ├── text_processor.py    # Text processing and NLP
+│   ├── file_handler.py      # File upload and parsing
+│   └── matcher.py          # Keyword matching logic
+└── tests/               # Unit tests
+    └── test_matcher.py
+```
+
+## Usage
+
+1. **Upload Resume**: Upload your resume in PDF, DOCX, or paste as text
+2. **Add Job Description**: Paste the job description or upload as file
+3. **Get Results**: View your compatibility score and see highlighted matches
+4. **Export Results**: Download a detailed report (future feature)
+
+## How It Works
+
+1. **Text Extraction**: Extracts text from uploaded documents
+2. **Preprocessing**: Cleans and normalizes text (removes stop words, lemmatizes)
+3. **Keyword Extraction**: Identifies important keywords and phrases using NLP
+4. **Matching**: Compares resume keywords against job description requirements
+5. **Scoring**: Calculates compatibility score based on matches and importance
+6. **Visualization**: Highlights matched terms and provides detailed breakdown
+
+## Development
+
+### Running Tests
+```bash
+python -m pytest tests/
+```
+
+### Adding New Features
+- Text preprocessing improvements in `utils/text_processor.py`
+- Enhanced matching algorithms in `utils/matcher.py`
+- UI improvements in `templates/` and `static/`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Future Enhancements
+
+- [ ] Machine learning-based skill matching
+- [ ] Industry-specific keyword databases
+- [ ] ATS (Applicant Tracking System) optimization tips
+- [ ] Resume improvement suggestions
+- [ ] Batch processing for multiple resumes
+- [ ] API endpoints for integration
+- [ ] React frontend for better UX
