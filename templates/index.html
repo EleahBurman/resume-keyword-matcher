@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form action="/upload" method="POST" enctype="multipart/form-data">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        
+        <!-- Resume Section -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+            <h3 style="color: #2c3e50; margin-bottom: 1rem;">📄 Your Resume</h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <label for="resume_file" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Upload Resume File:</label>
+                <input type="file" id="resume_file" name="resume_file" accept=".pdf,.docx,.doc,.txt" 
+                       style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                <small style="color: #666;">Supports PDF, DOCX, DOC, TXT files</small>
+            </div>
+            
+            <div style="text-align: center; margin: 1rem 0; color: #7f8c8d; font-weight: 600;">
+                OR
+            </div>
+            
+            <div>
+                <label for="resume_text" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Paste Resume Text:</label>
+                <textarea id="resume_text" name="resume_text" rows="8" 
+                         placeholder="Paste your resume content here..."
+                         style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 6px; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+        </div>
+        
+        <!-- Job Description Section -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+            <h3 style="color: #2c3e50; margin-bottom: 1rem;">💼 Job Description</h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <label for="job_desc_file" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Upload Job Description File:</label>
+                <input type="file" id="job_desc_file" name="job_desc_file" accept=".pdf,.docx,.doc,.txt"
+                       style="width: 100%; padding: 8px; border: 2px solid #e1e8ed; border-radius: 6px;">
+                <small style="color: #666;">Supports PDF, DOCX, DOC, TXT files</small>
+            </div>
+            
+            <div style="text-align: center; margin: 1rem 0; color: #7f8c8d; font-weight: 600;">
+                OR
+            </div>
+            
+            <div>
+                <label for="job_desc_text" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Paste Job Description Text:</label>
+                <textarea id="job_desc_text" name="job_desc_text" rows="8" 
+                         placeholder="Paste the job description here..."
+                         style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 6px; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <div style="text-align: center;">
+        <button type="submit" class="btn" style="font-size: 1.2rem; padding: 15px 30px;">
+            🔍 Analyze Match
+        </button>
+    </div>
+</form>
+
+<div style="margin-top: 3rem; padding: 2rem; background: #e8f4fd; border-radius: 8px; border-left: 4px solid #3498db;">
+    <h4 style="color: #2c3e50; margin-bottom: 1rem;">📋 How it works:</h4>
+    <ol style="color: #555; line-height: 1.8;">
+        <li><strong>Upload or paste</strong> your resume and the job description</li>
+        <li><strong>Our AI analyzes</strong> both documents to extract key skills and requirements</li>
+        <li><strong>Get a compatibility score</strong> showing how well your resume matches</li>
+        <li><strong>See highlighted matches</strong> and get suggestions for improvement</li>
+    </ol>
+</div>
+
+<div style="margin-top: 2rem; text-align: center; color: #7f8c8d;">
+    <p><strong>Supported formats:</strong> PDF, Word (DOCX/DOC), Plain Text (TXT)</p>
+    <p><strong>File size limit:</strong> 16MB maximum</p>
+</div>
+{% endblock %}
