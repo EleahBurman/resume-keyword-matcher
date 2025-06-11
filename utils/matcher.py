@@ -19,7 +19,7 @@ class KeywordMatcher:
     
     def __init__(self):
         """Initialize the KeywordMatcher"""
-        self.similarity_threshold = 0.8  # Minimum similarity for fuzzy matching
+        self.similarity_threshold = 0.85  # Increased from 0.8 - more strict matching
         
         # Weight multipliers for different match types
         self.match_weights = {
@@ -27,6 +27,35 @@ class KeywordMatcher:
             'fuzzy_match': 1.5,      # Similar keywords (e.g., "develop" vs "developer")
             'skill_match': 2.5,      # Technical skill matches
             'phrase_match': 1.8      # Multi-word phrase matches
+        }
+        
+        # Valid word transformations for fuzzy matching
+        self.valid_transformations = {
+            'develop': ['developer', 'development', 'developing', 'develops'],
+            'manage': ['manager', 'management', 'managing', 'manages'],
+            'analyze': ['analyst', 'analysis', 'analyzing', 'analyzes'],
+            'design': ['designer', 'designing', 'designs'],
+            'program': ['programmer', 'programming', 'programs'],
+            'test': ['testing', 'tester', 'tests'],
+            'api': ['apis'],
+            'database': ['databases', 'db'],
+            'framework': ['frameworks'],
+            'library': ['libraries'],
+            'service': ['services'],
+            'application': ['applications', 'app', 'apps'],
+            'system': ['systems'],
+            'platform': ['platforms'],
+            'tool': ['tools'],
+            'technology': ['technologies', 'tech'],
+            'skill': ['skills'],
+            'experience': ['experienced'],
+            'knowledge': ['knowledgeable'],
+            'proficient': ['proficiency'],
+            'collaborate': ['collaboration', 'collaborative'],
+            'communicate': ['communication'],
+            'implement': ['implementation', 'implementing'],
+            'optimize': ['optimization', 'optimizing'],
+            'integrate': ['integration', 'integrating']
         }
     
     def match_keywords(self, resume_keywords, job_keywords):
@@ -116,7 +145,7 @@ class KeywordMatcher:
         return exact_matches
     
     def _find_fuzzy_matches(self, resume_kw, job_kw, exact_matches):
-        """Find similar keywords using fuzzy string matching"""
+        """Find similar keywords using intelligent fuzzy matching"""
         fuzzy_matches = []
         exact_match_words = {match['keyword'] for match in exact_matches}
         
@@ -131,19 +160,41 @@ class KeywordMatcher:
                 if job_word in exact_match_words:
                     continue
                 
-                # Calculate similarity
-                similarity = self._calculate_similarity(resume_word, job_word)
+                # First check if it's a valid semantic transformation
+                if self._are_semantically_related(resume_word, job_word):
+                    similarity = self._calculate_similarity(resume_word, job_word)
+                    if similarity > best_similarity:
+                        best_similarity = similarity
+                        best_match = {
+                            'resume_keyword': resume_word,
+                            'job_keyword': job_word,
+                            'similarity': similarity,
+                            'resume_score': resume_data.get('score', 1.0),
+                            'job_score': job_data.get('score', 1.0),
+                            'match_strength': similarity * min(resume_data.get('score', 1.0), job_data.get('score', 1.0)),
+                            'match_type': 'semantic'
+                        }
                 
-                if similarity >= self.similarity_threshold and similarity > best_similarity:
-                    best_similarity = similarity
-                    best_match = {
-                        'resume_keyword': resume_word,
-                        'job_keyword': job_word,
-                        'similarity': similarity,
-                        'resume_score': resume_data.get('score', 1.0),
-                        'job_score': job_data.get('score', 1.0),
-                        'match_strength': similarity * min(resume_data.get('score', 1.0), job_data.get('score', 1.0))
-                    }
+                # Then check high-similarity matches (but only for meaningful words)
+                elif (len(resume_word) > 4 and len(job_word) > 4 and  # Both words must be substantial
+                      abs(len(resume_word) - len(job_word)) <= 3):      # Similar length
+                    
+                    similarity = self._calculate_similarity(resume_word, job_word)
+                    
+                    if (similarity >= self.similarity_threshold and 
+                        similarity > best_similarity and
+                        self._are_likely_related(resume_word, job_word)):
+                        
+                        best_similarity = similarity
+                        best_match = {
+                            'resume_keyword': resume_word,
+                            'job_keyword': job_word,
+                            'similarity': similarity,
+                            'resume_score': resume_data.get('score', 1.0),
+                            'job_score': job_data.get('score', 1.0),
+                            'match_strength': similarity * min(resume_data.get('score', 1.0), job_data.get('score', 1.0)),
+                            'match_type': 'fuzzy'
+                        }
             
             if best_match:
                 fuzzy_matches.append(best_match)
@@ -181,6 +232,67 @@ class KeywordMatcher:
         skill_matches.sort(key=lambda x: x['match_strength'], reverse=True)
         return skill_matches
     
+    def _are_semantically_related(self, word1, word2):
+        """Check if two words are semantically related (same root, different forms)"""
+        word1_lower = word1.lower()
+        word2_lower = word2.lower()
+        
+        # Check direct transformations
+        for root, variations in self.valid_transformations.items():
+            if ((word1_lower == root and word2_lower in variations) or 
+                (word2_lower == root and word1_lower in variations) or
+                (word1_lower in variations and word2_lower in variations)):
+                return True
+        
+        # Check common word endings that indicate related words
+        related_endings = [
+            ('develop', 'developer'), ('develop', 'development'),
+            ('manage', 'manager'), ('manage', 'management'),
+            ('analyze', 'analyst'), ('analyze', 'analysis'),
+            ('program', 'programmer'), ('program', 'programming'),
+            ('design', 'designer'), ('coordinate', 'coordinator'),
+            ('administer', 'administrator'), ('supervise', 'supervisor')
+        ]
+        
+        for ending_pair in related_endings:
+            if ((word1_lower == ending_pair[0] and word2_lower == ending_pair[1]) or
+                (word1_lower == ending_pair[1] and word2_lower == ending_pair[0])):
+                return True
+        
+        return False
+    
+    def _are_likely_related(self, word1, word2):
+        """Check if two words are likely to be related even with high similarity"""
+        word1_lower = word1.lower()
+        word2_lower = word2.lower()
+        
+        # Avoid matching completely different words that happen to be similar
+        unrelated_pairs = [
+            ('project', 'prospect'), ('contact', 'contract'), ('affect', 'effect'),
+            ('accept', 'except'), ('advice', 'advise'), ('breath', 'breadth'),
+            ('desert', 'dessert'), ('loose', 'lose'), ('quite', 'quiet'),
+            ('weather', 'whether'), ('personal', 'personnel')
+        ]
+        
+        for pair in unrelated_pairs:
+            if ((word1_lower == pair[0] and word2_lower == pair[1]) or
+                (word1_lower == pair[1] and word2_lower == pair[0])):
+                return False
+        
+        # If words share a meaningful prefix (3+ characters), they might be related
+        if len(word1_lower) > 4 and len(word2_lower) > 4:
+            common_prefix_len = 0
+            for i in range(min(len(word1_lower), len(word2_lower))):
+                if word1_lower[i] == word2_lower[i]:
+                    common_prefix_len += 1
+                else:
+                    break
+            
+            # If they share 60%+ of characters and have a substantial common prefix, likely related
+            if (common_prefix_len >= 3 and 
+                common_prefix_len / min(len(word1_lower), len(word2_lower)) >= 0.6):
+                return True
+        
     def _calculate_similarity(self, word1, word2):
         """Calculate similarity between two words"""
         return SequenceMatcher(None, word1.lower(), word2.lower()).ratio()
