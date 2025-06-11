@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Match Results - Resume Keyword Matcher{% endblock %}
+
+{% block header %}Match Analysis Results{% endblock %}
+{% block subtitle %}Here's how well your resume matches the job description{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <!-- Compatibility Score Section -->
+    <div style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 2rem; border-radius: 12px; text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 3rem; margin-bottom: 0.5rem;">{{ results.compatibility_score }}%</h2>
+        <p style="font-size: 1.3rem; opacity: 0.9;">Compatibility Score</p>
+        
+        {% if results.compatibility_score >= 80 %}
+            <p style="margin-top: 1rem; font-size: 1.1rem;">🎉 Excellent match! Your resume aligns very well with this job.</p>
+        {% elif results.compatibility_score >= 60 %}
+            <p style="margin-top: 1rem; font-size: 1.1rem;">👍 Good match! Consider highlighting a few more relevant skills.</p>
+        {% elif results.compatibility_score >= 40 %}
+            <p style="margin-top: 1rem; font-size: 1.1rem;">⚠️ Moderate match. Some improvements needed to better align with the job requirements.</p>
+        {% else %}
+            <p style="margin-top: 1rem; font-size: 1.1rem;">🔧 Low match. Consider tailoring your resume more closely to this job description.</p>
+        {% endif %}
+    </div>
+
+    <!-- Summary Stats -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: #3498db; color: white; padding: 1.5rem; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold;">{{ results.match_summary.total_matches }}</div>
+            <div>Total Matches</div>
+        </div>
+        <div style="background: #9b59b6; color: white; padding: 1.5rem; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold;">{{ results.match_summary.exact_match_count }}</div>
+            <div>Exact Matches</div>
+        </div>
+        <div style="background: #e67e22; color: white; padding: 1.5rem; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold;">{{ results.match_summary.skill_match_count }}</div>
+            <div>Skill Matches</div>
+        </div>
+        <div style="background: #1abc9c; color: white; padding: 1.5rem; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold;">{{ results.analysis.keyword_coverage }}%</div>
+            <div>Keyword Coverage</div>
+        </div>
+    </div>
+
+    <!-- Exact Matches -->
+    {% if results.exact_matches %}
+    <div style="background: #e8f5e8; border-left: 4px solid #27ae60; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <h3 style="color: #27ae60; margin-bottom: 1rem;">🎯 Exact Keyword Matches ({{ results.exact_matches|length }})</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for match in results.exact_matches[:15] %}
+                <span style="background: #27ae60; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                    {{ match.keyword }} ({{ match.match_strength|round(1) }})
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Technical Skills -->
+    {% if results.skill_matches %}
+    <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <h3 style="color: #2196f3; margin-bottom: 1rem;">💻 Technical Skills Matched ({{ results.skill_matches|length }})</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for match in results.skill_matches[:10] %}
+                <span style="background: #2196f3; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                    {{ match.skill }} ({{ match.match_strength|round(1) }})
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Fuzzy Matches -->
+    {% if results.fuzzy_matches %}
+    <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <h3 style="color: #ff9800; margin-bottom: 1rem;">🔍 Similar Matches ({{ results.fuzzy_matches|length }})</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for match in results.fuzzy_matches[:10] %}
+                <span style="background: #ff9800; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                    {{ match.resume_keyword }} ≈ {{ match.job_keyword }} ({{ (match.similarity * 100)|round }}%)
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Analysis & Recommendations -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+        
+        <!-- Strengths -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+            <h3 style="color: #27ae60; margin-bottom: 1rem;">✅ Your Strengths</h3>
+            {% if results.analysis.strengths %}
+                <ul style="color: #555; line-height: 1.6;">
+                    {% for strength in results.analysis.strengths %}
+                        <li style="margin-bottom: 0.5rem;">{{ strength }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p style="color: #777;">We're still analyzing your strengths based on the job requirements.</p>
+            {% endif %}
+        </div>
+
+        <!-- Gaps & Recommendations -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+            <h3 style="color: #e74c3c; margin-bottom: 1rem;">🎯 Areas for Improvement</h3>
+            {% if results.analysis.gaps %}
+                <p style="margin-bottom: 1rem; color: #555;">Consider adding these keywords to your resume:</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                    {% for gap in results.analysis.gaps[:8] %}
+                        <span style="background: #e74c3c; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.85rem;">
+                            {{ gap }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: #777;">Great job! Your resume covers most of the key requirements.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    {% if results.recommendations %}
+    <div style="background: #e8f4fd; border-left: 4px solid #3498db; padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
+        <h3 style="color: #3498db; margin-bottom: 1rem;">💡 Recommendations</h3>
+        {% for rec in results.recommendations %}
+            <div style="margin-bottom: 1rem; padding: 1rem; background: white; border-radius: 6px;">
+                <strong style="color: #2c3e50;">{{ rec.type|title|replace('_', ' ') }}:</strong>
+                <p style="margin-top: 0.5rem; color: #555;">{{ rec.suggestion }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div style="text-align: center; margin-top: 3rem;">
+        <a href="/" class="btn" style="text-decoration: none; margin-right: 1rem;">
+            🔄 Analyze Another Match
+        </a>
+        <button onclick="window.print()" class="btn" style="background: linear-gradient(135deg, #95a5a6, #7f8c8d);">
+            🖨️ Print Results
+        </button>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn { display: none; }
+    body { background: white !important; }
+}
+
+@media (max-width: 768px) {
+    div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}
