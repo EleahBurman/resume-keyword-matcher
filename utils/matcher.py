@@ -256,7 +256,7 @@ class KeywordMatcher:
         analysis['keyword_coverage'] = round((matched_job_keywords / total_job_keywords) * 100, 1) if total_job_keywords > 0 else 0
         
         # Technical skills coverage
-        job_technical_skills = [kw for kw in job_kw.keys() if self._is_technical_skill(kw)]
+        job_technical_skills = [kw for kw in job_kw.keys() if self._is_technical_or_relevant_keyword(kw)]
         matched_technical_skills = len(skill_matches)
         if job_technical_skills:
             analysis['technical_skills_coverage'] = round((matched_technical_skills / len(job_technical_skills)) * 100, 1)
@@ -272,10 +272,34 @@ class KeywordMatcher:
         resume_keywords_set = set(resume_kw.keys())
         matched_keywords = {match['keyword'] for match in exact_matches}
         
+        # Filter out unhelpful keywords
+        unhelpful_keywords = {
+            'this', 'job', 'position', 'role', 'candidate', 'applicant',
+            'experience', 'skills', 'knowledge', 'ability', 'proficiency',
+            'proficient', 'expert', 'strong', 'good', 'excellent', 'great',
+            'team', 'work', 'working', 'develop', 'developer', 'development',
+            'engineer', 'engineering', 'manager', 'management', 'lead',
+            'senior', 'junior', 'level', 'years', 'year', 'time',
+            'opportunity', 'company', 'business', 'client', 'customer',
+            'service', 'solution', 'system', 'process', 'project',
+            'environment', 'application', 'technology', 'platform',
+            'tool', 'software', 'we', 'our', 'you', 'your', 'will',
+            'would', 'should', 'must', 'can', 'may', 'have', 'use',
+            'using', 'used', 'including', 'such', 'well', 'various',
+            'multiple', 'related', 'based', 'focused', 'oriented'
+        }
+        
         missing_important = []
         for job_word, job_data in job_kw.items():
-            if job_word not in resume_keywords_set and job_word not in matched_keywords:
-                if job_data.get('score', 0) > 2.0:  # Important keywords
+            if (job_word not in resume_keywords_set and 
+                job_word not in matched_keywords and
+                job_word not in unhelpful_keywords and
+                len(job_word) > 2 and
+                not job_word.isdigit() and
+                job_data.get('score', 0) > 2.0):  # Only important keywords
+                
+                # Additional filtering for technical relevance
+                if self._is_technical_or_relevant_keyword(job_word):
                     missing_important.append(job_word)
         
         if missing_important[:3]:  # Top 3 missing
@@ -285,10 +309,16 @@ class KeywordMatcher:
                 'suggestion': f"Consider adding these important keywords: {', '.join(missing_important[:3])}"
             })
         
-        # Skill-specific recommendations
+        # Skill-specific recommendations (more focused)
         technical_gaps = []
-        technical_skills = ['python', 'java', 'react', 'sql', 'aws', 'docker']
-        for skill in technical_skills:
+        important_technical_skills = [
+            'python', 'java', 'javascript', 'react', 'angular', 'vue', 'nodejs',
+            'sql', 'postgresql', 'mysql', 'mongodb', 'aws', 'azure', 'docker',
+            'kubernetes', 'git', 'jenkins', 'tensorflow', 'pytorch', 'pandas',
+            'numpy', 'scikit-learn', 'flask', 'django', 'spring', 'api', 'rest'
+        ]
+        
+        for skill in important_technical_skills:
             if skill in job_kw and skill not in resume_kw:
                 technical_gaps.append(skill)
         
@@ -301,13 +331,39 @@ class KeywordMatcher:
         
         return recommendations
     
-    def _is_technical_skill(self, keyword):
-        """Check if keyword is a technical skill"""
+    def _is_technical_or_relevant_keyword(self, keyword):
+        """Check if keyword is technical or otherwise relevant for recommendations"""
         technical_indicators = [
-            'python', 'java', 'javascript', 'react', 'angular', 'sql', 'aws',
-            'docker', 'kubernetes', 'api', 'database', 'framework', 'library'
+            'python', 'java', 'javascript', 'react', 'angular', 'vue', 'sql',
+            'aws', 'azure', 'docker', 'kubernetes', 'api', 'database', 'framework',
+            'library', 'agile', 'scrum', 'git', 'jenkins', 'ci/cd', 'devops',
+            'machine learning', 'data science', 'analytics', 'tensorflow', 'pytorch'
         ]
-        return keyword.lower() in technical_indicators
+        
+        # Check if it's a known technical skill
+        if keyword.lower() in technical_indicators:
+            return True
+            
+        # Check if it contains technical terms
+        technical_terms = ['js', 'py', 'sql', 'api', 'db', 'dev', 'ops', 'ml', 'ai']
+        if any(term in keyword.lower() for term in technical_terms):
+            return True
+            
+        # Check if it's a specific methodology or certification
+        methodologies = ['agile', 'scrum', 'kanban', 'lean', 'safe', 'itil']
+        if keyword.lower() in methodologies:
+            return True
+            
+        # Check if it's an industry-specific term (customize based on your field)
+        industry_terms = [
+            'fintech', 'saas', 'b2b', 'b2c', 'e-commerce', 'blockchain',
+            'cybersecurity', 'cloud', 'mobile', 'web', 'frontend', 'backend',
+            'fullstack', 'ui/ux', 'responsive', 'mvc', 'orm', 'restful'
+        ]
+        if keyword.lower() in industry_terms:
+            return True
+            
+        return False
     
     def _empty_result(self):
         """Return empty result structure"""
