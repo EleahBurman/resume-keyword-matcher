@@ -77,7 +77,20 @@ class TextProcessor:
             'preferred', 'qualification', 'qualifications', 'skills', 'ability',
             'knowledge', 'understanding', 'familiarity', 'proficient', 'expert',
             'years', 'year', 'month', 'months', 'time', 'full', 'part',
-            'looking', 'seeking', 'candidate', 'applicant', 'resume', 'cv'
+            'looking', 'seeking', 'candidate', 'applicant', 'resume', 'cv',
+            'this', 'that', 'these', 'those', 'our', 'we', 'us', 'you', 'your',
+            'will', 'would', 'should', 'could', 'must', 'can', 'may', 'might',
+            'working', 'opportunity', 'join', 'ideal', 'perfect', 'great',
+            'excellent', 'strong', 'good', 'best', 'top', 'leading', 'premier',
+            'successful', 'established', 'growing', 'dynamic', 'innovative',
+            'professional', 'skilled', 'talented', 'dedicated', 'motivated',
+            'passionate', 'enthusiastic', 'committed', 'detail', 'oriented',
+            'minded', 'focused', 'based', 'related', 'various', 'multiple',
+            'including', 'such', 'well', 'highly', 'very', 'extremely',
+            'plus', 'bonus', 'nice', 'have', 'preferred', 'desired',
+            'developer', 'development', 'engineer', 'engineering', 'analyst',
+            'manager', 'management', 'lead', 'senior', 'junior', 'entry',
+            'level', 'proficiency', 'proficient'
         }
         
         # Common technical skills and keywords to prioritize
@@ -235,29 +248,55 @@ class TextProcessor:
         original_lower = original_text.lower()
         
         for keyword, count in keyword_counts.items():
+            # Skip keywords that are too short or too common
+            if len(keyword) < 3 or keyword in self.custom_stop_words:
+                continue
+                
+            # Skip keywords that are just numbers or single letters
+            if keyword.isdigit() or len(keyword) == 1:
+                continue
+                
+            # Skip common job posting phrases
+            job_posting_phrases = [
+                'this job', 'our team', 'we are', 'you will', 'you have',
+                'we offer', 'apply now', 'send resume', 'equal opportunity',
+                'job description', 'job posting', 'position requires'
+            ]
+            if any(phrase in keyword for phrase in job_posting_phrases):
+                continue
+            
             score = count  # Base score is frequency
             
             # Boost technical keywords
             if keyword in self.technical_keywords:
-                score *= 2.0
+                score *= 2.5
             
             # Boost keywords that appear as complete words
             if re.search(r'\b' + re.escape(keyword) + r'\b', original_lower):
                 score *= 1.5
             
-            # Reduce score for very common words
-            if keyword in self.custom_stop_words:
-                score *= 0.5
-            
             # Boost longer keywords (likely more specific)
             if len(keyword) > 6:
-                score *= 1.2
+                score *= 1.3
+            elif len(keyword) > 8:
+                score *= 1.5
             
-            scored_keywords.append({
-                'keyword': keyword,
-                'count': count,
-                'score': score
-            })
+            # Reduce score for very generic terms
+            generic_terms = [
+                'team', 'work', 'project', 'business', 'client', 'customer',
+                'service', 'solution', 'system', 'process', 'environment',
+                'application', 'technology', 'platform', 'tool', 'software'
+            ]
+            if keyword in generic_terms:
+                score *= 0.7
+            
+            # Only include keywords with meaningful scores
+            if score >= 1.0:
+                scored_keywords.append({
+                    'keyword': keyword,
+                    'count': count,
+                    'score': score
+                })
         
         # Sort by score (descending)
         scored_keywords.sort(key=lambda x: x['score'], reverse=True)
